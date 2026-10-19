@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="kk" x-data="{ 
+    darkMode: false, 
+    activeTab: 'generator',
+    nameInput: '',
+    gender: 'male',
+    selectedCategory: 'all',
+    transformLevel: 50,
+    generatedNicks: [],
+    showToast: false,
+    toastMessage: '',
+    
+    // Quiz state
+    quizStep: 0,
+    quizAnswers: [],
+    quizResult: null,
+
+    init() {
+        this.generateNicknames();
+    },
+
+    notify(msg) {
+        this.toastMessage = msg;
+        this.showToast = true;
+        setTimeout(() => { this.showToast = false; }, 2500);
+    },
+
+    copyToClipboard(text) {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            this.notify(`«${text}» көшірілді! 📋`);
+        } catch (err) {
+            this.notify('Көшіру мүмкін болмады');
+        }
+        document.body.removeChild(textArea);
+    },
+
+    getTransformLabel() {
+        if (this.transformLevel <= 25) return '0-25% — Минимал / Ресми есім';
+        if (this.transformLevel <= 65) return '26-65% — Орташа тілдік трансформация';
+        return '66-100% — Максималды креатив & Псевдоним';
+    },
+
+    generateNicknames() {
+        let base = this.nameInput.trim();
+        
+        // Егер өріс бос болса, ештеңе шығармаймыз
+        if (!base) {
+            this.generatedNicks = [];
+            return;
+        }
+
+        let cleanBase = base.toLowerCase().replace(/[^a-zA-Zа-яәғқңөұүһіА-ЯӘҒҚҢӨҰҮҺІ]/g, '');
+        if (!cleanBase) {
+            this.generatedNicks = [];
+            return;
+        }
+
+        // Kazakh to Latin Transliteration
+        let translit = cleanBase
+            .replace(/а/g, 'a').replace(/ә/g, 'a').replace(/б/g, 'b').replace(/в/g, 'v').replace(/г/g, 'g').replace(/ғ/g, 'gh')
+            .replace(/д/g, 'd').replace(/е/g, 'e').replace(/ж/g, 'zh').replace(/з/g, 'z').replace(/и/g, 'i').replace(/й/g, 'y')
+            .replace(/к/g, 'k').replace(/қ/g, 'q').replace(/л/g, 'l').replace(/м/g, 'm').replace(/н/g, 'n').replace(/ң/g, 'ng')
+            .replace(/о/g, 'o').replace(/ө/g, 'o').replace(/п/g, 'p').replace(/р/g, 'r').replace(/с/g, 's').replace(/т/g, 't')
+            .replace(/у/g, 'u').replace(/ұ/g, 'u').replace(/ү/g, 'u').replace(/ф/g, 'f').replace(/х/g, 'h').replace(/һ/g, 'h')
+            .replace(/ц/g, 'ts').replace(/ч/g, 'ch').replace(/ш/g, 'sh').replace(/щ/g, 'sch').replace(/ы/g, 'y').replace(/і/g, 'i')
+            .replace(/э/g, 'e').replace(/ю/g, 'yu').replace(/я/g, 'ya');
+
+        let stem = translit.length > 3 ? translit.substring(0, Math.ceil(translit.length * 0.6)) : translit;
+        let capTranslit = translit.charAt(0).toUpperCase() + translit.slice(1);
+        let capStem = stem.charAt(0).toUpperCase() + stem.slice(1);
+
+        let list = [];
+
+        // LEVEL 0 - 25: Minimal, Official, Standard
+        if (this.transformLevel <= 35) {
+            list.push(
+                { name: `${translit}_official`, cat: 'official', catName: 'Ресми', badgeColor: 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300 border-blue-200', desc: 'Толық ресми атау', platform: 'LinkedIn / Portfolio', safety: '100% Қауіпсіз' },
+                { name: `${capTranslit}.kz`, cat: 'official', catName: 'Ресми', badgeColor: 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300 border-blue-200', desc: 'Қазақстандық домендік стиль', platform: 'General', safety: '100% Қауіпсіз' },
+                { name: `${translit}_15`, cat: 'official', catName: 'Ресми / Өңір', badgeColor: 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300 border-blue-200', desc: 'СҚО / 15 өңірлік кодымен', platform: 'Instagram / Telegram', safety: '85% Сақ' },
+                { name: `real_${translit}`, cat: 'official', catName: 'Ресми', badgeColor: 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300 border-blue-200', desc: 'Расталған аккаунт стилі', platform: 'Socials', safety: '100% Қауіпсіз' },
+                { name: `${translit}.me`, cat: 'official', catName: 'Ресми', badgeColor: 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300 border-blue-200', desc: 'Визитка никнейм', platform: 'Telegram', safety: '100% Қауіпсіз' },
+                { name: `${translit}_kz`, cat: 'national', catName: 'Ұлттық', badgeColor: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300 border-emerald-200', desc: 'Ресми ел коды', platform: 'Global', safety: '100% Қауіпсіз' },
+                { name: `mr_${translit}`, cat: 'official', catName: 'Ресми', badgeColor: 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300 border-blue-200', desc: 'Стандартты префикс', platform: 'Work / Study', safety: '95% Қауіпсіз' },
+                { name: `${capTranslit}_Core`, cat: 'official', catName: 'Ресми', badgeColor: 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300 border-blue-200', desc: 'Академиялық профиль', platform: 'GitHub / Study', safety: '100% Қауіпсіз' }
+            );
+        }
+
+        // LEVEL 20 - 75: Morphological & Suffix Modifications
+        if (this.transformLevel >= 15 && this.transformLevel <= 85) {
+            let femSuffixes = ['_qzz', 'osh', 'iko', 'a_ru', 'ee'];
+            let maleSuffixes = ['_bro', 'osh', 'ik', 'ee', '_khan'];
+            let chosenSuffixes = this.gender === 'female' ? femSuffixes : maleSuffixes;
+
+            list.push(
+                { name: `${stem}${chosenSuffixes[1]}`, cat: 'morph', catName: 'Тіларалық', badgeColor: 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300 border-purple-200', desc: 'Қазақша еркелету жұрнағы (-ош)', platform: 'Telegram / Instagram', safety: '95% Қауіпсіз' },
+                { name: `dee_${translit}`, cat: 'morph', catName: 'Тіларалық', badgeColor: 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300 border-purple-200', desc: 'Сленгтік ағылшын префиксі', platform: 'TikTok', safety: '95% Қауіпсіз' },
+                { name: `${stem}${chosenSuffixes[0]}`, cat: 'morph', catName: 'Тіларалық', badgeColor: 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300 border-purple-200', desc: 'Жасөспірімдер сленгі', platform: 'Shorts / TikTok', safety: '90% Қауіпсіз' },
+                { name: `${capStem}_x`, cat: 'morph', catName: 'Тіларалық', badgeColor: 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300 border-purple-200', desc: 'Қысқартылған стилизация', platform: 'Instagram', safety: '95% Қауіпсіз' },
+                { name: `the_${stem}`, cat: 'morph', catName: 'Тіларалық', badgeColor: 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300 border-purple-200', desc: 'Ағылшын артиклі + негіз', platform: 'TikTok', safety: '95% Қауіпсіз' },
+                { name: `${stem}_vibe`, cat: 'creative', catName: 'Креатив', badgeColor: 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300 border-amber-200', desc: 'Көңіл-күй маркери', platform: 'Instagram Stories', safety: '95% Қауіпсіз' }
+            );
+        }
+
+        // LEVEL 50 - 100: Highly Creative, Subculture & National Concepts
+        if (this.transformLevel >= 50) {
+            let natPrefix = this.gender === 'female' ? 'qazaq_kyzy_' : 'qazaq_bala_';
+
+            list.push(
+                { name: `shadow_${stem}`, cat: 'creative', catName: 'Креатив / Псевдоним', badgeColor: 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300 border-amber-200', desc: 'Компенсациялық анонимдік', platform: 'Discord / Steam', safety: '90% Қауіпсіз' },
+                { name: `${natPrefix}${stem}`, cat: 'national', catName: 'Ұлттық нақыш', badgeColor: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300 border-emerald-200', desc: 'Этно-ономастикалық идентификат', platform: 'Instagram / YouTube', safety: '100% Қауіпсіз' },
+                { name: `alash_${translit}`, cat: 'national', catName: 'Ұлттық нақыш', badgeColor: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300 border-emerald-200', desc: 'Тарихи-ағартушылық бренд', platform: 'General', safety: '100% Қауіпсіз' },
+                { name: `xX_${capStem}_Xx`, cat: 'creative', catName: 'Креатив / Кибер', badgeColor: 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300 border-amber-200', desc: 'Графикалық геймерлік симметрия', platform: 'Gaming / Twitch', safety: '85% Қауіпсіз' },
+                { name: `cyber_${stem}`, cat: 'creative', catName: 'Креатив', badgeColor: 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300 border-amber-200', desc: 'Сандық IT субмәдениет', platform: 'Discord', safety: '95% Қауіпсіз' },
+                { name: `${stem}_batyr`, cat: 'national', catName: 'Ұлттық нақыш', badgeColor: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300 border-emerald-200', desc: 'Традициялық статус сөзі', platform: 'General', safety: '100% Қауіпсіз' },
+                { name: `luna_${stem}`, cat: 'creative', catName: 'Креатив', badgeColor: 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300 border-amber-200', desc: 'Эстетикалық визуализация', platform: 'Pinterest / Insta', safety: '95% Қауіпсіз' },
+                { name: `tumar_${translit}`, cat: 'national', catName: 'Ұлттық нақыш', badgeColor: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300 border-emerald-200', desc: 'Қорғаушы сакралды концепт', platform: 'Socials', safety: '100% Қауіпсіз' },
+                { name: `${stem}_777`, cat: 'creative', catName: 'Креатив / Символ', badgeColor: 'bg-rose-100 text-rose-800 dark:bg-rose-900/50 dark:text-rose-300 border-rose-200', desc: 'Нұмерологиялық маркер', platform: 'TikTok', safety: '80% Сақ' },
+                { name: `khan_${translit}`, cat: 'national', catName: 'Ұлттық нақыш', badgeColor: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300 border-emerald-200', desc: 'Мәртебелі бедел атауы', platform: 'Gaming / Telegram', safety: '95% Қауіпсіз' }
+            );
+        }
+
+        if (this.selectedCategory !== 'all') {
+            this.generatedNicks = list.filter(item => item.cat === this.selectedCategory);
+            if (this.generatedNicks.length === 0) this.generatedNicks = list;
+        } else {
+            this.generatedNicks = list;
+        }
+    },
+
+    answerQuiz(score) {
+        this.quizAnswers.push(score);
+        if (this.quizStep < 3) {
+            this.quizStep++;
+        } else {
+            let total = this.quizAnswers.reduce((a, b) => a + b, 0);
+            if (total >= 9) {
+                this.quizResult = {
+                    title: '🛡️ Жоғары деңгейлі Цифрлық Қауіпсіздік!',
+                    desc: 'Сіздің профиліңіз бен никнейміңіз кибергигиена нормаларына толық сай келеді! Жеке деректеріңіз (туған жыл, мектеп, мекенжай) жария етілмеген. Болашақ цифрлық ізіңіз (digital footprint) таза.',
+                    color: 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-200'
+                };
+            } else if (total >= 5) {
+                this.quizResult = {
+                    title: '⚠️ Орташа сақтық — Кейбір ақпараттар ашық!',
+                    desc: 'Никіңізде немесе биода өңір коды (15), сыныбыңыз немесе туған жылыңыз көрініс тапқан. Бұл әлеуметтік инженерия үшін қауіп тудыруы мүмкін. Өзгерту ұсынылады.',
+                    color: 'border-amber-500 bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200'
+                };
+            } else {
+                this.quizResult = {
+                    title: '🚨 Қауіпті аймақ — Жеке деректердің таралуы (Oversharing)!',
+                    desc: 'Никнейміңізде толық аты-жөніңіз, туған жылыңыз бен тұрғылықты жеріңіз белгілі болып тұр. Кибершабуылдар мен фишингтің алдын алу үшін никті шұғыл бейтарап нұсқаға ауыстырыңыз!',
+                    color: 'border-rose-500 bg-rose-50 dark:bg-rose-950/40 text-rose-900 dark:text-rose-200'
+                };
+            }
+        }
+    },
+
+    resetQuiz() {
+        this.quizStep = 0;
+        this.quizAnswers = [];
+        this.quizResult = null;
+    }
+}" :class="{ 'dark': darkMode }" class="transition-colors duration-300">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ғылыми Жоба: Есімім — менің брендім</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; font-size: 17px; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(226, 232, 240, 0.9);
+        }
+        .dark .glass-card {
+            background: rgba(15, 23, 42, 0.82);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(51, 65, 85, 0.7);
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 26px;
+            width: 26px;
+            border-radius: 50%;
+            background: #4f46e5;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(79, 70, 229, 0.5);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-50 via-sky-50/40 to-indigo-100/50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col selection:bg-indigo-600 selection:text-white">
+
+    <header class="sticky top-0 z-50 glass-card border-b shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <div class="flex items-center space-x-3 sm:space-x-4">
+                <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-violet-600 flex items-center justify-center text-white text-2xl shadow-lg shadow-indigo-500/30">
+                    <i class="fa-solid fa-microscope"></i>
+                </div>
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-xs sm:text-sm uppercase tracking-widest font-black px-3 py-1 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">ҒЫЛЫМИ ЖОБА</span>
+                        <span class="text-sm text-slate-500 dark:text-slate-400 font-semibold hidden sm:inline">8-сынып оқушысының зерттеуі</span>
+                    </div>
+                    <h1 class="text-lg sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight mt-0.5">
+                        Есімім — менің брендім
+                    </h1>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-3">
+                <button @click="darkMode = !darkMode" class="w-11 h-11 rounded-xl bg-slate-200/80 dark:bg-slate-800 flex items-center justify-center text-slate-700 dark:text-yellow-400 hover:scale-105 transition-transform" title="Тақырыпты ауыстыру">
+                    <i :class="darkMode ? 'fa-solid fa-sun text-xl' : 'fa-solid fa-moon text-xl'"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+        <div class="grid grid-cols-3 gap-2 p-2 rounded-2xl glass-card shadow-sm border">
+            <button @click="activeTab = 'generator'" :class="activeTab === 'generator' ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-800/60'" class="py-3.5 px-4 rounded-xl font-bold text-sm sm:text-base flex items-center justify-center space-x-2 transition-all duration-200">
+                <i class="fa-solid fa-sliders text-base sm:text-lg"></i>
+                <span>Генератор & Деңгей</span>
+            </button>
+            <button @click="activeTab = 'analytics'" :class="activeTab === 'analytics' ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-800/60'" class="py-3.5 px-4 rounded-xl font-bold text-sm sm:text-base flex items-center justify-center space-x-2 transition-all duration-200">
+                <i class="fa-solid fa-chart-column text-base sm:text-lg"></i>
+                <span>Зерттеу Аналитикасы</span>
+            </button>
+            <button @click="activeTab = 'quiz'" :class="activeTab === 'quiz' ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-800/60'" class="py-3.5 px-4 rounded-xl font-bold text-sm sm:text-base flex items-center justify-center space-x-2 transition-all duration-200">
+                <i class="fa-solid fa-shield-halved text-base sm:text-lg"></i>
+                <span>Цифрлық Із Тесті</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content Body -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-8 flex-grow w-full">
+
+        <div x-show="activeTab === 'generator'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" class="space-y-8">
+            
+            <!-- Controls Box -->
+            <div class="glass-card rounded-3xl p-6 sm:p-8 shadow-xl border relative overflow-hidden">
+                <div class="max-w-4xl space-y-6">
+                    <div>
+                        <span class="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 text-xs sm:text-sm font-extrabold mb-2">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            <span>Интерактивті реттегіш</span>
+                        </span>
+                        <h2 class="text-2xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+                            Ақылды Никнейм Генераторы
+                        </h2>
+                        <p class="text-sm sm:text-base text-slate-600 dark:text-slate-300 mt-2">
+                            Трансформация деңгейін (ползунок) жылжыту арқылы есімнің өзгеру тереңдігін басқарыңыз.
+                        </p>
+                    </div>
+
+                    <!-- Input Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div>
+                            <label class="block text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Есіміңізді енгізіңіз</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-indigo-500 text-lg">
+                                    <i class="fa-solid fa-signature"></i>
+                                </span>
+                                <input type="text" x-model="nameInput" @input="generateNicknames()" placeholder="Есіміңізді жазыңыз..." class="w-full pl-12 pr-4 py-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold shadow-sm text-slate-800 dark:text-slate-100 text-base sm:text-lg">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Гендерлік мотивация</label>
+                            <div class="grid grid-cols-2 gap-2 p-1.5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 h-[60px] items-center">
+                                <button @click="gender = 'male'; generateNicknames()" :class="gender === 'male' ? 'bg-indigo-600 text-white font-bold' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white font-medium'" class="h-full rounded-xl text-sm sm:text-base transition-colors flex items-center justify-center space-x-2">
+                                    <i class="fa-solid fa-mars text-base"></i>
+                                    <span>Ұл бала</span>
+                                </button>
+                                <button @click="gender = 'female'; generateNicknames()" :class="gender === 'female' ? 'bg-indigo-600 text-white font-bold' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white font-medium'" class="h-full rounded-xl text-sm sm:text-base transition-colors flex items-center justify-center space-x-2">
+                                    <i class="fa-solid fa-venus text-base"></i>
+                                    <span>Қыз бала</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- LEVEL SLIDER (0 - 100) -->
+                    <div class="p-6 rounded-2xl bg-indigo-50/80 dark:bg-slate-900/80 border border-indigo-100 dark:border-slate-800 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <label class="text-sm sm:text-base font-black text-slate-900 dark:text-white flex items-center space-x-2">
+                                <i class="fa-solid fa-gauge-high text-indigo-600 text-lg"></i>
+                                <span>Трансформация & Креатив Деңгейі:</span>
+                            </label>
+                            <span class="text-base font-mono font-black px-3.5 py-1 rounded-xl bg-indigo-600 text-white" x-text="transformLevel + '%'"></span>
+                        </div>
+
+                        <input type="range" min="0" max="100" x-model="transformLevel" @input="generateNicknames()" class="w-full h-3 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+
+                        <div class="flex items-center justify-between text-xs sm:text-sm font-bold text-slate-500 dark:text-slate-400">
+                            <span>0% (Ресми / Түпнұсқа)</span>
+                            <span class="text-indigo-600 dark:text-indigo-400 text-sm sm:text-base font-extrabold" x-text="getTransformLabel()"></span>
+                            <span>100% (Макс Креатив)</span>
+                        </div>
+                    </div>
+
+                    <!-- Quick Filter Buttons -->
+                    <div class="flex flex-wrap gap-2.5 items-center pt-2">
+                        <span class="text-sm font-bold text-slate-400 mr-2">Сүзгі:</span>
+                        <button @click="selectedCategory = 'all'; generateNicknames()" :class="selectedCategory === 'all' ? 'bg-indigo-600 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300'" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors">Барлығы</button>
+                        <button @click="selectedCategory = 'official'; generateNicknames()" :class="selectedCategory === 'official' ? 'bg-indigo-600 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300'" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors">Ресми</button>
+                        <button @click="selectedCategory = 'morph'; generateNicknames()" :class="selectedCategory === 'morph' ? 'bg-indigo-600 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300'" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors">Тіларалық</button>
+                        <button @click="selectedCategory = 'creative'; generateNicknames()" :class="selectedCategory === 'creative' ? 'bg-indigo-600 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300'" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors">Креатив</button>
+                        <button @click="selectedCategory = 'national'; generateNicknames()" :class="selectedCategory === 'national' ? 'bg-indigo-600 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300'" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors">Ұлттық</button>
+                    </div>
+
+                </div>
+            </div>
+
+            <div>
+                <!-- Егер есім енгізілсе, генерация нәтижесі шығады -->
+                <template x-if="generatedNicks.length > 0">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg sm:text-xl font-bold text-slate-900 dark:text-white flex items-center space-x-2">
+                                <i class="fa-solid fa-list-check text-indigo-600"></i>
+                                <span>Генерацияланған Варианттар</span>
+                            </h3>
+                            <span class="text-sm px-3.5 py-1 rounded-full bg-indigo-100 dark:bg-indigo-950 font-black text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800" x-text="generatedNicks.length + ' ұсыныс'"></span>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                            <template x-for="(item, index) in generatedNicks" :key="index">
+                                <div class="glass-card rounded-2xl p-5 shadow-md border hover:shadow-xl transition-all duration-300 flex flex-col justify-between group">
+                                    <div>
+                                        <div class="flex items-center justify-between mb-3">
+                                            <span class="text-xs font-bold px-3 py-1 rounded-full border" :class="item.badgeColor" x-text="item.catName"></span>
+                                            <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400" x-text="item.safety"></span>
+                                        </div>
+                                        
+                                        <div class="bg-slate-100 dark:bg-slate-900/90 rounded-2xl p-4 my-2 flex items-center justify-between border border-slate-200 dark:border-slate-800 group-hover:border-indigo-500/50 transition-colors">
+                                            <span class="text-lg font-mono font-bold text-indigo-600 dark:text-indigo-400 tracking-wide select-all" x-text="item.name"></span>
+                                            <button @click="copyToClipboard(item.name)" class="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-600 dark:hover:text-white transition-all" title="Көшіру">
+                                                <i class="fa-regular fa-copy text-sm"></i>
+                                            </button>
+                                        </div>
+
+                                        <div class="space-y-1.5 text-xs sm:text-sm text-slate-600 dark:text-slate-300 my-3">
+                                            <p class="truncate"><strong>Сипаты:</strong> <span x-text="item.desc"></span></p>
+                                            <p class="text-slate-400"><strong>Платформа:</strong> <span x-text="item.platform"></span></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- Егер есім енгізілмесе (строка бос болса), мына ескертпе/подсказка шығады -->
+                <template x-if="generatedNicks.length === 0">
+                    <div class="glass-card rounded-3xl p-8 text-center border shadow-sm my-4 flex flex-col items-center justify-center space-y-3">
+                        <div class="w-16 h-16 rounded-full bg-indigo-50 dark:bg-indigo-950/80 flex items-center justify-center text-indigo-600 dark:text-indigo-400 text-2xl border border-indigo-100 dark:border-indigo-900">
+                            <i class="fa-solid fa-pen-keyboard"></i>
+                        </div>
+                        <h4 class="text-lg sm:text-xl font-bold text-slate-800 dark:text-slate-200">
+                            Есімді енгізгенше нұсқалар көрсетілмейді
+                        </h4>
+                        <p class="text-sm sm:text-base text-slate-500 dark:text-slate-400 max-w-md">
+                            Никнейм нұсқаларын көру үшін жоғарыдағы «Есіміңізді енгізіңіз» өрісіне өз атыңызды жазыңыз.
+                        </p>
+                    </div>
+                </template>
+            </div>
+
+        </div>
+
+        <div x-show="activeTab === 'analytics'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" class="space-y-8" style="display: none;">
+            
+            <div class="glass-card rounded-3xl p-6 sm:p-8 shadow-xl border">
+                <div class="max-w-3xl">
+                    <span class="text-xs sm:text-sm font-extrabold px-3.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 mb-3 inline-block">Практикалық бөлім & Деректер</span>
+                    <h2 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mb-2">
+                        100+ Сауалнама және Корпус Талдауы
+                    </h2>
+                    <p class="text-slate-600 dark:text-slate-300 text-base sm:text-lg leading-relaxed">
+                        Мектеп оқушылары арасында жүргізілген экспресс-сауалнама және әлеуметтік желілердегі никнеймдерді математикалық-статистикалық өңдеу нәтижелері.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Visual Category Percentages -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                
+                <div class="glass-card rounded-2xl p-6 border shadow-sm relative overflow-hidden">
+                    <div class="text-4xl font-black text-blue-600 dark:text-blue-400 mb-1">25%</div>
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white">Ресми және толық есімдер</h3>
+                    <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 mb-3">alihan_samatov, aruzhan_k</p>
+                    <div class="w-full bg-slate-200 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
+                        <div class="bg-blue-600 h-full" style="width: 25%"></div>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-2xl p-6 border shadow-sm relative overflow-hidden">
+                    <div class="text-4xl font-black text-purple-600 dark:text-purple-400 mb-1">45%</div>
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white">Тілдік трансформация</h3>
+                    <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 mb-3">aro_sh, dee_dias, samattovaa</p>
+                    <div class="w-full bg-slate-200 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
+                        <div class="bg-purple-600 h-full" style="width: 45%"></div>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-2xl p-6 border shadow-sm relative overflow-hidden">
+                    <div class="text-4xl font-black text-amber-600 dark:text-amber-400 mb-1">20%</div>
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white">Шығармашылық / Псевдоним</h3>
+                    <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 mb-3">shadow_hunter, luna_stars</p>
+                    <div class="w-full bg-slate-200 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
+                        <div class="bg-amber-600 h-full" style="width: 20%"></div>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-2xl p-6 border shadow-sm relative overflow-hidden">
+                    <div class="text-4xl font-black text-emerald-600 dark:text-emerald-400 mb-1">10%</div>
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white">Ұлттық нақыштағы есімдер</h3>
+                    <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 mb-3">qazaq_kyzy, alash_urpagy</p>
+                    <div class="w-full bg-slate-200 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
+                        <div class="bg-emerald-600 h-full" style="width: 10%"></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div x-show="activeTab === 'quiz'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" class="space-y-8" style="display: none;">
+            <div class="glass-card rounded-3xl p-6 sm:p-8 shadow-xl border max-w-2xl mx-auto">
+                <template x-if="!quizResult">
+                    <div>
+                        <div class="flex items-center justify-between mb-6">
+                            <span class="text-xs sm:text-sm font-extrabold px-3.5 py-1 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800" x-text="'Сұрақ ' + (quizStep + 1) + ' / 4'"></span>
+                        </div>
+                        <div class="space-y-6">
+                            <h3 class="text-lg sm:text-2xl font-bold text-slate-900 dark:text-white" x-text="quizStep === 0 ? 'Никнейміңізде немесе биода жеке өңір кодыңыз (мысалы, 15) көрініс таба ма?' : (quizStep === 1 ? 'Профиліңізде туған жылыңыз немесе сыныбыңыз жазылған ба?' : (quizStep === 2 ? 'Аватар ретінде өзіңіздің шынайы фотоңызды қолданасыз ба?' : 'Никнейміңізді басқа платформаларда да (Steam, Telegram, TikTok) бірдей қолданасыз ба?'))"></h3>
+                            <div class="grid grid-cols-1 gap-3">
+                                <button @click="answerQuiz(3)" class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-indigo-500 text-left font-bold text-base sm:text-lg transition-all flex items-center justify-between group">
+                                    <span>Жоқ, толық жасырын / бейтарап</span>
+                                    <i class="fa-solid fa-arrow-right text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                                </button>
+                                <button @click="answerQuiz(1)" class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-indigo-500 text-left font-bold text-base sm:text-lg transition-all flex items-center justify-between group">
+                                    <span>Иә, кездеседі</span>
+                                    <i class="fa-solid fa-arrow-right text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+                <template x-if="quizResult">
+                    <div class="text-center space-y-6 py-4">
+                        <div class="p-6 rounded-2xl border-2 shadow-sm" :class="quizResult.color">
+                            <h3 class="text-xl sm:text-2xl font-black mb-2" x-text="quizResult.title"></h3>
+                            <p class="text-base sm:text-lg leading-relaxed" x-text="quizResult.desc"></p>
+                        </div>
+                        <button @click="resetQuiz()" class="px-6 py-3.5 rounded-xl bg-indigo-600 text-white font-bold text-base shadow-lg hover:bg-indigo-700 transition-colors">
+                            Тестті қайта бастау
+                        </button>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Toast Notification -->
+    <div x-show="showToast" x-transition class="fixed bottom-6 right-6 z-50 glass-card px-6 py-4 rounded-2xl shadow-2xl border flex items-center space-x-3 text-base font-bold text-slate-900 dark:text-white" style="display: none;">
+        <i class="fa-solid fa-circle-check text-emerald-500 text-lg"></i>
+        <span x-text="toastMessage"></span>
+    </div>
+
+</body>
+</html>
